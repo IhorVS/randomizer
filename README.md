@@ -28,11 +28,11 @@ After installing the project locally, add this dependency to a consuming Maven p
 
 ## Components
 
-| Package | Interface | Implementation | Operation |
-| --- | --- | --- | --- |
-| `ivs.games.accessories.randomizer` | `Randomizer` | `StandardRandomizer` | `int[] generate()` |
-| `ivs.games.accessories.randomizer.dice` | `DiceCup` | `StandardDiceCup` | `int[] roll()` |
-| `ivs.games.accessories.randomizer.picker` | `RandomPicker<T>` | `StandardRandomPicker<T>` | `T pick()` |
+| Package  | Interface         | Implementation            | Operation          |
+|----------|-------------------|---------------------------|--------------------|
+| Root     | `Randomizer`      | `StandardRandomizer`      | `int[] generate()` |
+| `dice`   | `DiceCup`         | `StandardDiceCup`         | `int[] roll()`     |
+| `picker` | `RandomPicker<T>` | `StandardRandomPicker<T>` | `T pick()`         |
 
 All implementations are final and use static factories with private constructors.
 
@@ -58,12 +58,12 @@ int[] stops = reels.generate();
 Randomizer repeated = StandardRandomizer.repeated(5, 20);
 ```
 
-| Factory | Configuration |
-| --- | --- |
-| `of(int... bounds)` | Separate bounds, default generator |
-| `of(RandomGenerator random, int... bounds)` | Separate bounds, supplied generator |
-| `repeated(int count, int bound)` | Same bound for all positions, default generator |
-| `repeated(RandomGenerator random, int count, int bound)` | Same bound, supplied generator |
+| Factory                                                  | Configuration                                   |
+|----------------------------------------------------------|-------------------------------------------------|
+| `of(int... bounds)`                                      | Separate bounds, default generator              |
+| `of(RandomGenerator random, int... bounds)`              | Separate bounds, supplied generator             |
+| `repeated(int count, int bound)`                         | Same bound for all positions, default generator |
+| `repeated(RandomGenerator random, int count, int bound)` | Same bound, supplied generator                  |
 
 One generator serves every position and every subsequent call. A custom generator is retained directly,
 without copying or reseeding:
@@ -93,11 +93,11 @@ DiceCup single = StandardDiceCup.of(1);
 DiceCup three = StandardDiceCup.of(3);
 ```
 
-| Factory | Configuration |
-| --- | --- |
-| `of()` | Two dice, own standard randomizer |
-| `of(int count)` | Specified positive number of dice, own standard randomizer |
-| `of(int count, Randomizer randomizer)` | Specified count, supplied randomizer |
+| Factory                                | Configuration                                              |
+|----------------------------------------|------------------------------------------------------------|
+| `of()`                                 | Two dice, own standard randomizer                          |
+| `of(int count)`                        | Specified positive number of dice, own standard randomizer |
+| `of(int count, Randomizer randomizer)` | Specified count, supplied randomizer                       |
 
 A supplied randomizer must return exactly `count` values in `[0, 6)`.
 The cup validates them and adds one to each value without modifying the supplied array.
@@ -124,10 +124,10 @@ RandomPicker<String> coin = StandardRandomPicker.of(List.of("HEADS", "TAILS"));
 String side = coin.pick();
 ```
 
-| Factory | Configuration |
-| --- | --- |
-| `of(List<? extends T> values)` | List snapshot, own standard randomizer |
-| `of(List<? extends T> values, Randomizer randomizer)` | List snapshot, supplied randomizer |
+| Factory                                               | Configuration                          |
+|-------------------------------------------------------|----------------------------------------|
+| `of(List<? extends T> values)`                        | List snapshot, own standard randomizer |
+| `of(List<? extends T> values, Randomizer randomizer)` | List snapshot, supplied randomizer     |
 
 The picker preserves the list's order and repeated entries. Later structural changes to the source list
 have no effect. Null entries are prohibited. Elements are not copied, and selections return the original references;
@@ -138,11 +138,11 @@ The picker validates it and does not modify the supplied array.
 
 ## Validation and errors
 
-| Condition | Exception |
-| --- | --- |
-| Null factory arguments or null picker elements | `NullPointerException` |
-| Empty bounds or picker list; non-positive bound or count | `IllegalArgumentException` |
-| Supplied randomizer returns null, the wrong length, or an out-of-range value to a cup or picker | `IllegalStateException` |
+| Condition                                                                                       | Exception                  |
+|-------------------------------------------------------------------------------------------------|----------------------------|
+| Null factory arguments or null picker elements                                                  | `NullPointerException`     |
+| Empty bounds or picker list; non-positive bound or count                                        | `IllegalArgumentException` |
+| Supplied randomizer returns null, the wrong length, or an out-of-range value to a cup or picker | `IllegalStateException`    |
 
 Exceptions from supplied generators and randomizers propagate unchanged.
 Cups and pickers validate result shape and range; they do not test its statistical distribution.
