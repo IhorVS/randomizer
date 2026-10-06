@@ -6,7 +6,10 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.random.RandomGenerator;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class StandardRandomizerTest {
 

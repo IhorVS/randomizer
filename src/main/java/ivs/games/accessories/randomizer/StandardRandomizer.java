@@ -10,7 +10,10 @@ import java.util.random.RandomGenerator;
  * and a configured exclusive upper bound for each position.
  *
  * <p>Each value is generated in the range from {@code 0} (inclusive)
- * to its corresponding upper bound (exclusive).
+ * to its corresponding upper bound (exclusive). All bounds must be positive.
+ * The number of positions equals the number of configured bounds.
+ * Selection probabilities are determined by the supplied generator, which must
+ * satisfy the uniform bounded generation contract of {@link RandomGenerator#nextInt(int)}.
  *
  * <p>The bounds are copied during construction and are never modified.
  * Each call to {@link #generate()} returns a new array.
@@ -38,7 +41,7 @@ public final class StandardRandomizer implements Randomizer {
      *
      * @param random random generator
      * @param bounds exclusive upper bound for each position, in result order
-     * @throws NullPointerException if {@code random} or {@code bounds} is null
+     * @throws NullPointerException     if {@code random} or {@code bounds} is null
      * @throws IllegalArgumentException if {@code bounds} is empty
      *                                  or any bound is not positive
      */
@@ -62,7 +65,7 @@ public final class StandardRandomizer implements Randomizer {
      *
      * @param bounds exclusive upper bound for each position, in result order
      * @return a new randomizer
-     * @throws NullPointerException if {@code bounds} is null
+     * @throws NullPointerException     if {@code bounds} is null
      * @throws IllegalArgumentException if {@code bounds} is empty
      *                                  or any bound is not positive
      */
@@ -80,7 +83,7 @@ public final class StandardRandomizer implements Randomizer {
      * @param random random generator
      * @param bounds exclusive upper bound for each position, in result order
      * @return a new randomizer
-     * @throws NullPointerException if {@code random} or {@code bounds} is null
+     * @throws NullPointerException     if {@code random} or {@code bounds} is null
      * @throws IllegalArgumentException if {@code bounds} is empty
      *                                  or any bound is not positive
      */
@@ -110,10 +113,10 @@ public final class StandardRandomizer implements Randomizer {
      * The caller is responsible for ensuring safe access if it is shared.
      *
      * @param random random generator
-     * @param count number of positions
-     * @param bound exclusive upper bound for every position
+     * @param count  number of positions
+     * @param bound  exclusive upper bound for every position
      * @return a new randomizer
-     * @throws NullPointerException if {@code random} is null
+     * @throws NullPointerException     if {@code random} is null
      * @throws IllegalArgumentException if {@code count} or {@code bound}
      *                                  is not positive
      */
@@ -137,11 +140,12 @@ public final class StandardRandomizer implements Randomizer {
      * {@link RandomGenerator#nextInt(int)} once for each configured bound.
      *
      * <p>This operation does not synchronize access to the generator
-     * and is not atomic when called concurrently.
+     * and is not atomic when called concurrently. Exceptions thrown by the
+     * generator are propagated unchanged.
      *
      * @return a new array containing one value per configured position,
-     *         each in the range from {@code 0} (inclusive)
-     *         to its corresponding upper bound (exclusive)
+     * each in the range from {@code 0} (inclusive)
+     * to its corresponding upper bound (exclusive)
      */
     @Override
     public int[] generate() {

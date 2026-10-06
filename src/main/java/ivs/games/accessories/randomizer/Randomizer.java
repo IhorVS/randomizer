@@ -27,7 +27,7 @@ public interface Randomizer {
      * exclusive upper bound.
      *
      * @return a new, non-null array whose length equals the number
-     *         of configured positions
+     * of configured positions
      */
     int[] generate();
 }
