@@ -1,5 +1,5 @@
 /**
- * Random selection with replacement from fixed, non-empty lists.
+ * Random selection from fixed, non-empty lists without removing selected elements.
  *
  * <p>{@link ivs.games.accessories.randomizer.picker.RandomPicker} defines the selection contract.
  * {@link ivs.games.accessories.randomizer.picker.StandardRandomPicker} selects by a random index.
