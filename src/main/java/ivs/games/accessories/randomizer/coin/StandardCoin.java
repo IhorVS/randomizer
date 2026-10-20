@@ -19,7 +19,7 @@ import java.util.Arrays;
  * generator. This implementation does not synchronize access to its
  * randomizer; concurrent use is supported only if the randomizer supports it.
  */
-public class StandardCoin implements Coin {
+public final class StandardCoin implements Coin {
 
     private final RandomPicker<CoinSide> randomPicker;
 
@@ -48,7 +48,7 @@ public class StandardCoin implements Coin {
      *
      * @return a new coin
      */
-    public  static StandardCoin of() {
+    public static StandardCoin of() {
         return new StandardCoin(StandardRandomizer.of(2));
     }
 }

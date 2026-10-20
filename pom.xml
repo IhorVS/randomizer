@@ -7,6 +7,16 @@
     <groupId>ivs.games.accessories</groupId>
     <artifactId>randomizer</artifactId>
     <version>1.0.0</version>
+    <name>Randomizer</name>
+    <description>A Java library for configurable random integer sequences, dice rolls, coin tosses, and random selection.</description>
+    <url>https://github.com/IhorVS/randomizer</url>
+
+    <scm>
+        <connection>scm:git:https://github.com/IhorVS/randomizer.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/IhorVS/randomizer.git</developerConnection>
+        <url>https://github.com/IhorVS/randomizer</url>
+        <tag>HEAD</tag>
+    </scm>
 
     <developers>
         <developer>
