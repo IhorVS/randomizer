@@ -1,7 +1,7 @@
 # Randomizer
 
 A Java library for configurable random integer sequences, standard six-sided dice,
-and random selection from lists. Game rules and interpretation of results belong to the calling code.
+two-sided coins, and random selection from lists. Game rules and interpretation of results belong to the calling code.
 
 ## Requirements and build
 
@@ -28,13 +28,14 @@ After installing the project locally, add this dependency to a consuming Maven p
 
 ## Components
 
-| Package  | Interface         | Implementation            | Operation          |
-|----------|-------------------|---------------------------|--------------------|
-| Root     | `Randomizer`      | `StandardRandomizer`      | `int[] generate()` |
-| `dice`   | `DiceCup`         | `StandardDiceCup`         | `int[] roll()`     |
-| `picker` | `RandomPicker<T>` | `StandardRandomPicker<T>` | `T pick()`         |
+| Package  | Interface         | Implementation            | Operation            |
+|----------|-------------------|---------------------------|----------------------|
+| Root     | `Randomizer`      | `StandardRandomizer`      | `int[] generate()`   |
+| `dice`   | `DiceCup`         | `StandardDiceCup`         | `int[] roll()`       |
+| `coin`   | `Coin`            | `StandardCoin`           | `CoinSide getSide()` |
+| `picker` | `RandomPicker<T>` | `StandardRandomPicker<T>` | `T pick()`           |
 
-All implementations are final and use static factories with private constructors.
+The provided standard implementations use static factories with private constructors.
 
 ## Integer sequences
 
@@ -103,6 +104,35 @@ A supplied randomizer must return exactly `count` values in `[0, 6)`.
 The cup validates them and adds one to each value without modifying the supplied array.
 For backgammon, interpreting doubles or expanding them into four moves is the engine's responsibility.
 
+## Coin
+
+A coin toss returns either `CoinSide.HEADS` or `CoinSide.TAILS`, with equal probability.
+The default factory uses a standard randomizer; an overload accepts a `Randomizer` for controlled results:
+
+```java
+import ivs.games.accessories.randomizer.Randomizer;
+import ivs.games.accessories.randomizer.coin.Coin;
+import ivs.games.accessories.randomizer.coin.CoinSide;
+import ivs.games.accessories.randomizer.coin.StandardCoin;
+
+Coin coin = StandardCoin.of();
+CoinSide side = coin.getSide();
+
+// A controlled index makes a coin toss deterministic in a test.
+Randomizer fixedIndex = () -> new int[]{0};
+Coin fixedCoin = StandardCoin.of(fixedIndex);
+// fixedCoin.getSide() returns CoinSide.HEADS.
+```
+
+| Factory                         | Configuration                                  |
+|---------------------------------|------------------------------------------------|
+| `of()`                          | Own standard randomizer with a default generator |
+| `of(Randomizer randomizer)`     | Supplied randomizer                            |
+
+The supplied randomizer must return exactly one index in `[0, 2)` for each toss.
+The coin validates the result length and range, but equal probabilities depend on the randomizer's distribution.
+Exceptions from the randomizer propagate unchanged.
+
 ## Random picker
 
 A picker selects one element from a fixed, non-empty list. Every list position has equal selection probability.
@@ -119,9 +149,6 @@ String selected = picker.pick();
 // Repeated entries provide weights: A has probability 2/3, B has probability 1/3.
 RandomPicker<String> weighted = StandardRandomPicker.of(List.of("A", "A", "B"));
 
-// A coin can be represented by a picker; no additional component is required.
-RandomPicker<String> coin = StandardRandomPicker.of(List.of("HEADS", "TAILS"));
-String side = coin.pick();
 ```
 
 | Factory                                               | Configuration                          |
@@ -142,10 +169,10 @@ The picker validates it and does not modify the supplied array.
 |-------------------------------------------------------------------------------------------------|----------------------------|
 | Null factory arguments or null picker elements                                                  | `NullPointerException`     |
 | Empty bounds or picker list; non-positive bound or count                                        | `IllegalArgumentException` |
-| Supplied randomizer returns null, the wrong length, or an out-of-range value to a cup or picker | `IllegalStateException`    |
+| Supplied randomizer returns null, the wrong length, or an out-of-range value to a cup, coin, or picker | `IllegalStateException`    |
 
 Exceptions from supplied generators and randomizers propagate unchanged.
-Cups and pickers validate result shape and range; they do not test its statistical distribution.
+Cups, coins, and pickers validate result shape and range; they do not test its statistical distribution.
 Custom implementations are responsible for the probability guarantees in the interfaces.
 
 ## Deterministic tests
@@ -178,8 +205,8 @@ where default-generator results are deterministic. They do not rely on statistic
 ## Thread safety
 
 The implementations do not synchronize calls to their random source. Bounds and stored list structure remain fixed;
-integer generation and dice rolls return separate arrays. Concurrent use depends on the supplied generator
-or randomizer. Callers are responsible for shared mutable picker elements as well.
+integer generation and dice rolls return separate arrays, and coin tosses return enum values. Concurrent use depends
+on the supplied generator or randomizer. Callers are responsible for shared mutable picker elements as well.
 
 A thread-safe generator does not make an entire multi-value generation atomic: concurrent calls can interleave,
 and the values assigned to each session depend on call order. Different randomizer instances still share state
