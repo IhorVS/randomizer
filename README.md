@@ -1,7 +1,7 @@
 # Randomizer
 
 A Java library for configurable random integer sequences, standard six-sided dice,
-two-sided coins, and random selection from lists. Game rules and interpretation of results belong to the calling code.
+two-sided coins, random selection from lists, and shuffling. Game rules and interpretation of results belong to the calling code.
 
 ## Requirements and build
 
@@ -34,6 +34,7 @@ After installing the project locally, add this dependency to a consuming Maven p
 | `dice`   | `DiceCup`         | `StandardDiceCup`         | `int[] roll()`       |
 | `coin`   | `Coin`            | `StandardCoin`           | `CoinSide getSide()` |
 | `picker` | `RandomPicker<T>` | `StandardRandomPicker<T>` | `T pick()`           |
+| `shuffle` | `Shuffler<T>`    | `StandardShuffler<T>`    | `List<T> shuffle()`  |
 
 The provided standard implementations use static factories with private constructors.
 
@@ -133,6 +134,29 @@ The supplied randomizer must return exactly one index in `[0, 2)` for each toss.
 The coin validates the result length and range, but equal probabilities depend on the randomizer's distribution.
 Exceptions from the randomizer propagate unchanged.
 
+## Shuffling
+
+A shuffler stores a snapshot of a list and returns a new, mutable list in shuffled order.
+The source list is not changed; element references and duplicates are preserved. Empty and singleton lists are supported.
+
+```java
+import java.util.List;
+import ivs.games.accessories.randomizer.shuffle.Shuffler;
+import ivs.games.accessories.randomizer.shuffle.StandardShuffler;
+
+Shuffler<String> deck = StandardShuffler.of(List.of("A", "B", "C", "D"));
+List<String> shuffled = deck.shuffle();
+```
+
+| Factory                                              | Configuration                          |
+|------------------------------------------------------|-----------------------------------------|
+| `of(List<? extends T> values)`                       | List snapshot, own standard randomizer  |
+| `of(List<? extends T> values, Randomizer randomizer)` | List snapshot, supplied randomizer    |
+
+The implementation uses Fisher-Yates. For a list of size `n`, each shuffle requests `n - 1` indices,
+with exclusive upper bounds `n`, `n - 1`, down to `2`. No random values are requested for lists of size zero or one.
+The result shape and index ranges are validated; uniform shuffle probabilities depend on the randomizer's distribution.
+
 ## Random picker
 
 A picker selects one element from a fixed, non-empty list. Every list position has equal selection probability.
@@ -167,12 +191,12 @@ The picker validates it and does not modify the supplied array.
 
 | Condition                                                                                       | Exception                  |
 |-------------------------------------------------------------------------------------------------|----------------------------|
-| Null factory arguments or null picker elements                                                  | `NullPointerException`     |
+| Null factory arguments or null list elements                                                    | `NullPointerException`     |
 | Empty bounds or picker list; non-positive bound or count                                        | `IllegalArgumentException` |
-| Supplied randomizer returns null, the wrong length, or an out-of-range value to a cup, coin, or picker | `IllegalStateException`    |
+| Supplied randomizer returns null, the wrong length, or an out-of-range value to a cup, coin, picker, or shuffler | `IllegalStateException`    |
 
 Exceptions from supplied generators and randomizers propagate unchanged.
-Cups, coins, and pickers validate result shape and range; they do not test its statistical distribution.
+Dice cups, coins, pickers, and shufflers validate result shape and range; they do not test its statistical distribution.
 Custom implementations are responsible for the probability guarantees in the interfaces.
 
 ## Deterministic tests
@@ -185,6 +209,7 @@ import ivs.games.accessories.randomizer.Randomizer;
 import ivs.games.accessories.randomizer.dice.DiceCup;
 import ivs.games.accessories.randomizer.dice.StandardDiceCup;
 import ivs.games.accessories.randomizer.picker.StandardRandomPicker;
+import ivs.games.accessories.randomizer.shuffle.StandardShuffler;
 
 // Test double for a game that depends on DiceCup.
 DiceCup fixedCup = () -> new int[]{3, 6};
@@ -196,6 +221,9 @@ var cup = StandardDiceCup.of(2, fixedIndices);
 
 var picker = StandardRandomPicker.of(List.of("A", "B"), () -> new int[]{1});
 // picker.pick() returns "B".
+
+var shuffler = StandardShuffler.of(List.of("A", "B", "C"), () -> new int[]{0, 0});
+// shuffler.shuffle() returns ["B", "C", "A"].
 ```
 
 These fixed implementations are test doubles, rather than production sources of uniform random values.
@@ -205,8 +233,8 @@ where default-generator results are deterministic. They do not rely on statistic
 ## Thread safety
 
 The implementations do not synchronize calls to their random source. Bounds and stored list structure remain fixed;
-integer generation and dice rolls return separate arrays, and coin tosses return enum values. Concurrent use depends
-on the supplied generator or randomizer. Callers are responsible for shared mutable picker elements as well.
+integer generation and dice rolls return separate arrays, coins return enum values, and shufflers return separate lists.
+Concurrent use depends on the supplied generator or randomizer. Callers are responsible for shared mutable elements as well.
 
 A thread-safe generator does not make an entire multi-value generation atomic: concurrent calls can interleave,
 and the values assigned to each session depend on call order. Different randomizer instances still share state

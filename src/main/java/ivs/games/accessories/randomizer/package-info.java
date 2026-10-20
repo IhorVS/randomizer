@@ -1,5 +1,5 @@
 /**
- * Configurable random integer sequences, dice rolls, coin tosses, and random selection.
+ * Configurable random integer sequences, dice rolls, coin tosses, random selection, and shuffling.
  *
  * <p>{@link ivs.games.accessories.randomizer.Randomizer} defines the integer
  * generation contract used by the library's standard components.
