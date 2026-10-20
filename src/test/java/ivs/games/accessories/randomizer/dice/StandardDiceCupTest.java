@@ -31,6 +31,47 @@ class StandardDiceCupTest {
         assertArrayEquals(new int[]{1, 2, 3, 4, 5, 6}, cup.roll());
     }
 
+    /** Verifies mixed dice use their own face counts and preserve their order. */
+    @Test
+    void ofFacesSupportsMixedFaceCounts() {
+        var cup = StandardDiceCup.ofFaces(() -> new int[]{5, 7, 19}, 6, 8, 20);
+
+        assertArrayEquals(new int[]{6, 8, 20}, cup.roll());
+    }
+
+    /** Verifies the default mixed-dice factory uses a randomizer for each die range. */
+    @Test
+    void ofFacesWithDefaultRandomizerSupportsMixedFaceCounts() {
+        var cup = StandardDiceCup.ofFaces(4, 8, 20);
+
+        int[] results = cup.roll();
+
+        assertEquals(3, results.length);
+        assertTrue(results[0] >= 1 && results[0] <= 4);
+        assertTrue(results[1] >= 1 && results[1] <= 8);
+        assertTrue(results[2] >= 1 && results[2] <= 20);
+    }
+
+    /** Verifies a supplied randomizer result is not changed by a mixed-dice roll. */
+    @Test
+    void mixedDiceRollDoesNotModifyRandomizerResult() {
+        int[] values = {5, 7, 19};
+        var cup = StandardDiceCup.ofFaces(() -> values, 6, 8, 20);
+
+        assertArrayEquals(new int[]{6, 8, 20}, cup.roll());
+        assertArrayEquals(new int[]{5, 7, 19}, values);
+    }
+
+    /** Verifies the cup retains a snapshot of the configured face counts. */
+    @Test
+    void ofFacesCopiesFaceCounts() {
+        int[] faceCounts = {6, 8};
+        var cup = StandardDiceCup.ofFaces(() -> new int[]{5, 7}, faceCounts);
+        faceCounts[1] = 6;
+
+        assertArrayEquals(new int[]{6, 8}, cup.roll());
+    }
+
     /** Verifies that the default factory creates a cup without requiring any arguments. */
     @Test
     void ofCreatesDefaultCup() {
@@ -101,6 +142,17 @@ class StandardDiceCupTest {
     @Test
     void ofRejectsNullRandomizer() {
         assertThrows(NullPointerException.class, () -> StandardDiceCup.of(1, null));
+        assertThrows(NullPointerException.class, () -> StandardDiceCup.ofFaces(null, 6));
+    }
+
+    /** Verifies mixed-dice factories reject missing or non-positive face counts. */
+    @Test
+    void ofFacesRejectsInvalidFaceCounts() {
+        assertThrows(IllegalArgumentException.class, StandardDiceCup::ofFaces);
+        assertThrows(IllegalArgumentException.class, () -> StandardDiceCup.ofFaces(6, 0));
+        assertThrows(IllegalArgumentException.class, () -> StandardDiceCup.ofFaces(6, -1));
+        assertThrows(NullPointerException.class, () -> StandardDiceCup.ofFaces((int[]) null));
+        assertThrows(IllegalArgumentException.class, () -> StandardDiceCup.ofFaces(unusedRandomizer()));
     }
 
     /** Verifies that a null randomizer result is rejected as an invalid state. */
@@ -125,6 +177,14 @@ class StandardDiceCupTest {
     @ValueSource(ints = {-1, 6, Integer.MIN_VALUE, Integer.MAX_VALUE})
     void rollRejectsOutOfRangeValue(int invalidValue) {
         var cup = StandardDiceCup.of(3, () -> new int[]{0, invalidValue, 5});
+
+        assertThrows(IllegalStateException.class, cup::roll);
+    }
+
+    /** Verifies each mixed-dice result is validated against its own face count. */
+    @Test
+    void rollRejectsValueOutsideCorrespondingFaceCount() {
+        var cup = StandardDiceCup.ofFaces(() -> new int[]{5, 8, 0}, 6, 8, 20);
 
         assertThrows(IllegalStateException.class, cup::roll);
     }

@@ -28,13 +28,14 @@ After installing the project locally, add this dependency to a consuming Maven p
 
 ## Components
 
-| Package  | Interface         | Implementation            | Operation            |
-|----------|-------------------|---------------------------|----------------------|
-| Root     | `Randomizer`      | `StandardRandomizer`      | `int[] generate()`   |
-| `dice`   | `DiceCup`         | `StandardDiceCup`         | `int[] roll()`       |
-| `coin`   | `Coin`            | `StandardCoin`           | `CoinSide getSide()` |
-| `picker` | `RandomPicker<T>` | `StandardRandomPicker<T>` | `T pick()`           |
-| `shuffle` | `Shuffler<T>`    | `StandardShuffler<T>`    | `List<T> shuffle()`  |
+| Package   | Interface         | Implementation            | Operation            |
+|-----------|-------------------|---------------------------|----------------------|
+| Root      | `Randomizer`      | `StandardRandomizer`      | `int[] generate()`   |
+| `dice`    | `Die`             | `StandardDie`             | `int roll()`         |
+| `dice`    | `DiceCup`         | `StandardDiceCup`         | `int[] roll()`       |
+| `coin`    | `Coin`             | `StandardCoin`             | `CoinSide getSide()` |
+| `picker`  | `RandomPicker<T>` | `StandardRandomPicker<T>` | `T pick()`           |
+| `shuffle` | `Shuffler<T>`     | `StandardShuffler<T>`     | `List<T> shuffle()`  |
 
 The provided standard implementations use static factories with private constructors.
 
@@ -79,30 +80,47 @@ var randomizer = StandardRandomizer.of(new Random(123), 6, 8, 20);
 
 A seeded generator supports repeatable sequences when its algorithm and the order of calls remain the same.
 
-## Dice cup
+## Dice and dice cup
 
-A cup contains at least one standard six-sided die. Each roll returns a new array of face values from `1` to `6`.
-The no-argument factory creates a cup with two dice.
+A die has a positive number of faces and returns a value from `1` through that number. The default die is a standard d6.
+The cup can contain dice with different face counts. The existing count-based factories remain compatible and create d6 dice;
+the no-argument cup factory creates two dice.
 
 ```java
+import ivs.games.accessories.randomizer.dice.Die;
 import ivs.games.accessories.randomizer.dice.DiceCup;
+import ivs.games.accessories.randomizer.dice.StandardDie;
 import ivs.games.accessories.randomizer.dice.StandardDiceCup;
+
+Die d6 = StandardDie.of();
+Die d20 = StandardDie.of(20);
 
 DiceCup pair = StandardDiceCup.of();
 int[] faces = pair.roll();
 
 DiceCup single = StandardDiceCup.of(1);
 DiceCup three = StandardDiceCup.of(3);
+
+// One d6, one d8, and one d20; result positions follow this order.
+DiceCup mixed = StandardDiceCup.ofFaces(6, 8, 20);
+int[] mixedFaces = mixed.roll();
 ```
 
-| Factory                                | Configuration                                              |
-|----------------------------------------|------------------------------------------------------------|
-| `of()`                                 | Two dice, own standard randomizer                          |
-| `of(int count)`                        | Specified positive number of dice, own standard randomizer |
-| `of(int count, Randomizer randomizer)` | Specified count, supplied randomizer                       |
+| Factory                                         | Configuration                                              |
+|-------------------------------------------------|------------------------------------------------------------|
+| `StandardDie.of()`                              | One d6, own standard randomizer                            |
+| `StandardDie.of(int faceCount)`                 | One die with specified positive face count                 |
+| `StandardDie.of(Randomizer randomizer)`         | One d6 using the supplied randomizer                       |
+| `StandardDie.of(int faceCount, Randomizer)`     | One configured die using the supplied randomizer           |
+| `StandardDiceCup.of()`                          | Two d6 dice, own standard randomizer                       |
+| `StandardDiceCup.of(int count)`                 | Specified positive number of d6 dice                       |
+| `StandardDiceCup.of(int count, Randomizer)`     | Specified number of d6 dice, supplied randomizer           |
+| `StandardDiceCup.ofFaces(int... faceCounts)`    | One die per face count, own standard randomizer            |
+| `StandardDiceCup.ofFaces(Randomizer, int...)`   | One die per face count, supplied randomizer                |
 
-A supplied randomizer must return exactly `count` values in `[0, 6)`.
-The cup validates them and adds one to each value without modifying the supplied array.
+A supplied die randomizer must return exactly one value in `[0, faceCount)`.
+A supplied cup randomizer must return exactly one value per die; each value's exclusive upper bound is that die's face count.
+Both validate result length and ranges, then add one to each value without modifying the supplied array.
 For backgammon, interpreting doubles or expanding them into four moves is the engine's responsibility.
 
 ## Coin
@@ -192,8 +210,8 @@ The picker validates it and does not modify the supplied array.
 | Condition                                                                                       | Exception                  |
 |-------------------------------------------------------------------------------------------------|----------------------------|
 | Null factory arguments or null list elements                                                    | `NullPointerException`     |
-| Empty bounds or picker list; non-positive bound or count                                        | `IllegalArgumentException` |
-| Supplied randomizer returns null, the wrong length, or an out-of-range value to a cup, coin, picker, or shuffler | `IllegalStateException`    |
+| Empty bounds or picker list; non-positive bound, count, or die face count                       | `IllegalArgumentException` |
+| Supplied randomizer returns null, the wrong length, or an out-of-range value to a die, cup, coin, picker, or shuffler | `IllegalStateException`    |
 
 Exceptions from supplied generators and randomizers propagate unchanged.
 Dice cups, coins, pickers, and shufflers validate result shape and range; they do not test its statistical distribution.
