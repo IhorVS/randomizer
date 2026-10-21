@@ -6,12 +6,14 @@ two-sided coins, random selection from lists, and shuffling. Game rules and inte
 ## Requirements and build
 
 - JDK 21 or later (the project targets Java 21).
-- Maven.
+- Maven Wrapper downloads the configured Maven version automatically.
 
 ```shell
-mvn clean test
-mvn clean install
+sh ./mvnw clean test
+sh ./mvnw clean install
 ```
+
+On Windows, use `mvnw.cmd` instead of `sh ./mvnw`.
 
 The build produces a standard JAR and an attached source JAR. The runtime dependency is Apache Commons Lang 3.
 The POM also declares Lombok as provided and JUnit 5 / Mockito for tests.
